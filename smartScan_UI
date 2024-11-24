@@ -1,1 +1,85 @@
+import customtkinter as ctk
+import tkinter as tk
+from tkinter import filedialog
+import customtkinter
+from tkinter import *
+
+customtkinter.set_appearance_mode("dark")
+customtkinter.set_default_color_theme("dark-blue")
+
+def button_callback(): 
+        # Open file dialog and get the selected file path
+    file_path = filedialog.askopenfilename(title="Select a file", filetypes=[("All files", "*.*")])
+    
+    if file_path:  # If a file is selected
+        # Display the selected file path in the label
+        label1.configure(text=f"Selected file: {file_path}")
+    else:
+        label1.configure(text="No file selected")
+
+    if (file_path):
+        CSRRead(file_path)
+
+
+
+def CSRRead(file_path):
+    print(file_path)
+
+    
+
+def searchPatient():
+    search = search_entry.get()
+    print(search)
+
+
+
+    
+
+
+root = ctk.CTk()
+root.title("smartScan")
+app = customtkinter.CTk()
+app.geometry("900x900")
+
+
+
+
+### FRAME 1 ####
+frame1 = customtkinter.CTkFrame(app, width=30, height=100, fg_color="transparent")
+frame1.pack(side=TOP, expand=True, fill=BOTH)
+
+label = customtkinter.CTkLabel(frame1,
+            text="SmartScan",
+            fg_color="pink",
+            corner_radius=20,
+            text_color="black",
+            )
+label.pack(anchor=W)
+
+search_entry=customtkinter.CTkEntry(frame1, placeholder_text="Search Patient")
+search_entry.pack(anchor=E)
+
+button1=customtkinter.CTkButton(frame1, text="search", command=searchPatient)
+button1.pack(anchor=E)
+
+
+
+### FRAME 3 ####
+frame3 = customtkinter.CTkFrame(app, width=2000, height=2000,fg_color="transparent")
+frame3.pack( expand=True, fill=BOTH)
+
+button = customtkinter.CTkButton(frame3,
+            text="Upload File",
+            fg_color="pink",
+            text_color="black",
+            corner_radius=20,
+            command=button_callback)
+button.pack(padx=20, pady=20, anchor=S)
+
+label1 = ctk.CTkLabel(frame3, text="No file selected")
+label1.pack(padx=10, pady=10, anchor=S)
+
+app.mainloop()
+root.mainloop()
+
 
