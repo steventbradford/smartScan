@@ -20,29 +20,17 @@ def button_callback():
     if (file_path):
         CSRRead(file_path)
 
-
-
 def CSRRead(file_path):
-    print(file_path)
-
-    
+    print(file_path)   
 
 def searchPatient():
     search = search_entry.get()
     print(search)
 
-
-
-    
-
-
 root = ctk.CTk()
 root.title("smartScan")
 app = customtkinter.CTk()
 app.geometry("900x900")
-
-
-
 
 ### FRAME 1 ####
 frame1 = customtkinter.CTkFrame(app, width=30, height=100, fg_color="transparent")
@@ -56,16 +44,19 @@ label = customtkinter.CTkLabel(frame1,
             )
 label.pack(anchor=W)
 
-search_entry=customtkinter.CTkEntry(frame1, placeholder_text="Search Patient")
+search_entry=customtkinter.CTkEntry(frame1,
+                placeholder_text="Search Patient")
 search_entry.pack(anchor=E)
 
-button1=customtkinter.CTkButton(frame1, text="search", command=searchPatient)
+button1=customtkinter.CTkButton(frame1,
+                text="search", command=searchPatient)
 button1.pack(anchor=E)
 
-
-
 ### FRAME 3 ####
-frame3 = customtkinter.CTkFrame(app, width=2000, height=2000,fg_color="transparent")
+frame3 = customtkinter.CTkFrame(app,
+                width=2000,
+                height=2000,
+                fg_color="transparent")
 frame3.pack( expand=True, fill=BOTH)
 
 button = customtkinter.CTkButton(frame3,
@@ -76,8 +67,11 @@ button = customtkinter.CTkButton(frame3,
             command=button_callback)
 button.pack(padx=20, pady=20, anchor=S)
 
-label1 = ctk.CTkLabel(frame3, text="No file selected")
-label1.pack(padx=10, pady=10, anchor=S)
+label1 = ctk.CTkLabel(frame3,
+                text="No file selected")
+label1.pack(padx=10,
+                pady=10,
+                anchor=S)
 
 app.mainloop()
 root.mainloop()
