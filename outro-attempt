@@ -1,0 +1,124 @@
+import os
+import cv2
+import random
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import tensorflow as tf
+from keras import backend as K
+from keras.models import Model
+from keras.layers import Input, Conv2D, MaxPooling2D, Reshape, Bidirectional, LSTM, Dense, Lambda, Activation, BatchNormalization, Dropout
+from keras.optimizers import Adam
+from keras.models import load_model
+from keras.saving import register_keras_serializable
+from tensorflow.keras.backend import ctc_batch_cost, ctc_decode
+
+
+# Register Custom LSTM Layer
+@register_keras_serializable(package="Custom")
+class CustomLSTM(LSTM):
+    def __init__(self, *args, **kwargs):
+        super(CustomLSTM, self).__init__(*args, **kwargs)
+
+# Define and Register ctc_lambda_func
+@register_keras_serializable(package="Custom")
+def ctc_lambda_func(args):
+    y_pred, labels, input_length, label_length = args
+    # Exclude the first few RNN outputs (often noisy)
+    y_pred = y_pred[:, 2:, :]
+    return ctc_batch_cost(labels, y_pred, input_length, label_length)
+
+
+# Load the model with custom objects
+custom_objects = {"CustomLSTM": CustomLSTM, "ctc_lambda_func": ctc_lambda_func}
+model = load_model("_model.keras", compile=False, custom_objects=custom_objects)
+
+# Alphabet for decoding
+alphabets = "ABCDEFGHIJKLMNOPQRSTUVWXYZ-' "
+
+# Convert numeric predictions to text
+def num_to_label(num):
+    ret = ""
+    for ch in num:
+        if ch == -1:  # CTC Blank
+            break
+        ret += alphabets[ch]
+    return ret
+
+
+# # Preprocess input image
+# def preprocess(img):
+#     final_img = cv2.resize(img, (64, 256), interpolation=cv2.INTER_AREA)
+#     final_img = np.expand_dims(final_img, axis=-1)
+#     return final_img / 255.0
+
+def preprocess_image(img_path):
+    # Load image in grayscale
+    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    
+    # Resize the image to (256, 64) as expected by the model
+    img = cv2.resize(img, (64, 256))  # Resize to 64x256
+    
+    # Add an additional dimension to make the image shape (1, 256, 64, 1)
+    img = img.reshape(1, 256, 64, 1)
+    
+    # Normalize if needed (values between 0 and 1)
+    img = img.astype('float32') / 255.0
+    
+    # Print out the shape of the image
+    print("Preprocessed Image shape:", img.shape)
+    
+    return img
+
+# Test with a sample image
+img_path = "level1.jpg"  # Use your own image path
+preprocessed_image = preprocess_image(img_path)
+
+
+
+def predict_image(img_path):
+    try:
+        if not os.path.exists(img_path):
+            raise FileNotFoundError(f"File not found: {img_path}")
+        
+        # Load and preprocess the image
+        image = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        if image is None:
+            raise ValueError(f"Cannot read image: {img_path}")
+        image = preprocess(image)
+        image = np.expand_dims(image, axis=0)  # Add batch dimension
+        
+        # Check input shape
+        print("Image shape:", image.shape)  # Debugging
+        
+        # Placeholder inputs for labels and lengths
+        input_length = np.array([image.shape[2] // 4])  # Adjust based on model's reduction factor
+        label_length = np.array([10])  # Adjust as needed
+        dummy_labels = np.zeros((1, 24))  # Match expected shape (batch_size, max_label_length)
+
+        # Predict using the model
+        preds = model.predict([image, dummy_labels, input_length, label_length])
+        
+        # Check predictions shape
+        print("Predictions shape:", preds.shape)  # Debugging
+        
+        # Decode the predictions using ctc_decode
+        decoded, _ = ctc_decode(
+            preds,
+            input_length=np.ones(preds.shape[0]) * preds.shape[1],
+            greedy=True
+        )
+        decoded = decoded[0].numpy()
+        return num_to_label(decoded[0])
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
+# Example Usage
+img_path = "level1.jpg"  # Replace with your image path
+result = predict_image(img_path)
+print("Predicted Text:", result)
+
+
+model.summary()
